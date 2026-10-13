@@ -1,6 +1,6 @@
 #include "WidgetEquip.h"
 #include "Settings.h"
-#include "WidgetManager.h"  // SetHudVisible
+#include "WidgetManager.h"  // SyncVanillaArrowInfo
 
 using namespace RE;
 
@@ -504,9 +504,11 @@ auto WidgetEquip::update() -> void
 
  const GFxValue weight{ result };
  widgetweight->uiMovie->Invoke("widget.Update", nullptr, &weight, 1);
+ // Keep the HUD's own arrow counter hidden while this widget is shown. This used to force
+ // ArrowInfoInstance._visible = false every 0.2s, which fights any HUD code that also drives
+ // that clip (HUDMenu.ShowElements, fade managers) and made the counter flicker.
  if (auto hudMenu = ui->GetMenu<RE::HUDMenu>(); hudMenu && hudMenu->uiMovie) {
- SetHudVisible(hudMenu->uiMovie.get(), "_root.HUDMovieBaseInstance.ArrowInfoInstance._visible",
-	 !Settings::VisibleEquip_);
+	SyncVanillaArrowInfo(hudMenu->uiMovie.get(), widgetweight->uiMovie.get());
  }
 
 }
