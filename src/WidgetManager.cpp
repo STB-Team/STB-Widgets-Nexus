@@ -16,6 +16,93 @@ void SetHudVisible(RE::GFxMovieView* hud, const char* path, bool visible)
 	hud->SetVariable(path, value);
 }
 
+namespace
+{
+	// What we hide: the leaf pieces (icon, name, number) INSIDE the arrow counter.
+	//
+	// Do NOT touch these, all tried and all broke:
+	//   ArrowInfoInstance._visible / _alpha  - other HUD code (ShowElements, fade managers)
+	//       rewrites them every frame -> flicker.
+	//   ArrowCountInstance(Alt)._visible     - scripting that clip takes it away from the
+	//       ArrowInfoInstance fade timeline, so it stays stuck transparent -> counter gone.
+	//
+	// The leaves live in one-frame sprites with no timeline animation, and SkyHUD only ever
+	// sets their text/position, never _visible, so nothing contends with us here. A path
+	// that does not exist in this HUD (Alt pieces are SkyHUD-only) is skipped.
+	struct ArrowPiece
+	{
+		const char* path;
+		bool        hiddenByStb;  // we have forced this piece hidden
+		bool        wasVisible;   // it was visible before we hid it (restored later)
+	};
+
+	ArrowPiece g_arrowPieces[] = {
+		{ "_root.HUDMovieBaseInstance.ArrowInfoInstance.ArrowCountInstance.ArrowNumInstance._visible", false, false },
+		{ "_root.HUDMovieBaseInstance.ArrowInfoInstance.ArrowCountInstance.ArrowInstance._visible", false, false },
+		{ "_root.HUDMovieBaseInstance.ArrowInfoInstance.ArrowCountInstanceAlt.ArrowNameInstanceAlt._visible", false, false },
+		{ "_root.HUDMovieBaseInstance.ArrowInfoInstance.ArrowCountInstanceAlt.ArrowNumInstanceAlt._visible", false, false },
+		{ "_root.HUDMovieBaseInstance.ArrowInfoInstance.ArrowCountInstanceAlt.ArrowInstanceAlt._visible", false, false },
+	};
+
+	bool ReadBool(RE::GFxMovieView* a_movie, const char* a_path, bool& a_out)
+	{
+		RE::GFxValue value;
+		if (!a_movie->GetVariable(&value, a_path) || !value.IsBool()) {
+			return false;
+		}
+		a_out = value.GetBool();
+		return true;
+	}
+
+	// Is STB's equipment panel actually on screen right now? Enabled + not hidden by the
+	// hotkey + not faded out (combat mode / change mode fade it to alpha 0).
+	bool StbEquipOnScreen(RE::GFxMovieView* a_stbMovie)
+	{
+		if (!Settings::VisibleEquip_ || !Settings::VisibleEquipKey) {
+			return false;
+		}
+		if (!a_stbMovie) {
+			return true;
+		}
+		RE::GFxValue alpha;
+		if (a_stbMovie->GetVariable(&alpha, "_root.widget._alpha") && alpha.IsNumber()) {
+			return alpha.GetNumber() > 0.0;
+		}
+		return true;
+	}
+}
+
+void SyncVanillaArrowInfo(RE::GFxMovieView* hud, RE::GFxMovieView* stbEquipMovie)
+{
+	if (!hud) {
+		return;
+	}
+
+	const bool hideHudCounter = StbEquipOnScreen(stbEquipMovie);
+
+	for (auto& piece : g_arrowPieces) {
+		bool visible = false;
+		if (!ReadBool(hud, piece.path, visible)) {
+			continue;  // this HUD has no such piece
+		}
+
+		if (hideHudCounter) {
+			if (visible) {
+				// Visible now: either not hidden yet, or the HUD movie was rebuilt.
+				piece.wasVisible = true;
+				hud->SetVariable(piece.path, RE::GFxValue{ false });
+			}
+			piece.hiddenByStb = true;
+		} else if (piece.hiddenByStb) {
+			if (piece.wasVisible && !visible) {
+				hud->SetVariable(piece.path, RE::GFxValue{ true });
+			}
+			piece.hiddenByStb = false;
+			piece.wasVisible  = false;
+		}
+	}
+}
+
 void CheckInI()
 {
 	const auto& settings = Settings::get_singleton();
@@ -86,12 +173,10 @@ void CheckInI()
 		const GFxValue preset  = settings.PresetEquip_;
 		const GFxValue Visible = settings.VisibleEquip_;
 		if (auto hud = ui->GetMenu<RE::HUDMenu>(); hud && hud->uiMovie) {
-			// Only hide the vanilla arrow info when the STB equip widget is actually
-			// shown (enabled + not toggled off by the hotkey). Otherwise we would leave
-			// both hidden = the "missing HUD element" the bug report describes.
-			const bool stbEquipShown = settings.VisibleEquip_ && settings.VisibleEquipKey;
-			SetHudVisible(hud->uiMovie.get(), "_root.HUDMovieBaseInstance.ArrowInfoInstance._visible",
-				!stbEquipShown);
+			// Hide the HUD's own arrow counter only while the STB equip widget is actually
+			// shown (enabled + not toggled off by the hotkey), and bring it back otherwise.
+			// See SyncVanillaArrowInfo() for exactly what it hides and why.
+			SyncVanillaArrowInfo(hud->uiMovie.get(), widget->uiMovie.get());
 		}
 		if (settings.VisibleEquipKey)
 			widget->uiMovie->Invoke("widget.setVisible", nullptr, &Visible, 1);
