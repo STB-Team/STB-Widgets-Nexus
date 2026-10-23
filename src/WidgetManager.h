@@ -1,10 +1,5 @@
 #pragma once
-
-// Pushes the current settings (position/scale/alpha/visibility) into every
-// loaded widget movie. Call after settings change or on menu transitions.
+// Coalesces a settings request. Does not touch Scaleform on the caller's thread.
 void CheckInI();
-
-// Set the visibility of a variable inside the vanilla HUD movie. Writes
-// unconditionally (no caching) so it stays correct even when another HUD mod
-// changes the same Scaleform variable behind our back.
+// UI-frame-only helper; never call from game/Papyrus/settings callbacks.
 void SetHudVisible(RE::GFxMovieView* hud, const char* path, bool visible);

@@ -1,5 +1,6 @@
 #include "WidgetEquip.h"
 #include "Settings.h"
+#include "HudRuntime.h"
 #include "WidgetManager.h"  // SetHudVisible
 
 using namespace RE;
@@ -513,25 +514,16 @@ auto WidgetEquip::update() -> void
 
 void WidgetEquip::AdvanceMovie(const float interval, const uint32_t current_time)
 {
-  logger::debug("AdvanceMovie");
- if (Settings::VisibleEquip_ && Settings::VisibleEquipKey && Settings::UpdateEquip >= 0.2f) {
-  update();
-  Settings::UpdateEquip = 0;
- }
-  IMenu::AdvanceMovie(interval, current_time);
+    if (!STB::AdvanceWidget(*this, STB::Widget::Equip, frameState_, interval, current_time)) {
+        return;
+    }
+    if (Settings::VisibleEquip_ && Settings::VisibleEquipKey && frameState_.elapsed >= 0.2f) {
+        update();
+        frameState_.elapsed = 0.0f;
+    }
 }
 
 auto WidgetEquip::toggle_visibility(const bool mode) -> void
 {
-  const auto ui = UI::GetSingleton();
-  if (!ui) {
-    return;
-  }
-
-  const auto overlay_menu = ui->GetMenu(MENU_NAME);
-  if (!overlay_menu || !overlay_menu->uiMovie) {
-    return;
-  }
-
-  overlay_menu->uiMovie->SetVisible(mode);
+    STB::Hud().Visibility(mode);
 }

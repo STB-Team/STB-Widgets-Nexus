@@ -86,6 +86,9 @@ find_path(SIMPLEINI_INCLUDE_DIRS "SimpleIni.h" REQUIRED)
 # ---- Add source files ----
 
 set(SOURCES
+	src/HudRequests.h
+	src/HudRuntime.h
+	src/HudRuntime.cpp
 	src/main.cpp
 	src/Hooks.cpp
 	src/Hooks.h

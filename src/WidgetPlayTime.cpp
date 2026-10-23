@@ -1,5 +1,6 @@
 #include "WidgetPlayTime.h"
 #include "Settings.h"
+#include "HudRuntime.h"
 
 
 WidgetPlayTime::WidgetPlayTime()
@@ -36,7 +37,7 @@ auto WidgetPlayTime::register_() -> void
 auto WidgetPlayTime::show() -> void
 {
   if (const auto message_queue = RE::UIMessageQueue::GetSingleton()) {
-	if (auto ui = RE::UI::GetSingleton();  !ui->GetMenu(RE::TweenMenu::MENU_NAME) &&
+	if (auto ui = RE::UI::GetSingleton(); ui && !ui->GetMenu(RE::TweenMenu::MENU_NAME) &&
 										  !ui->GetMenu(RE::BarterMenu::MENU_NAME) && !ui->GetMenu(RE::ContainerMenu::MENU_NAME) &&
 										  !ui->GetMenu(RE::MapMenu::MENU_NAME) &&
 										  !ui->GetMenu(RE::InventoryMenu::MENU_NAME) && !ui->GetMenu(RE::GiftMenu::MENU_NAME)) {
@@ -85,25 +86,16 @@ auto WidgetPlayTime::update() -> void
 
 void WidgetPlayTime::AdvanceMovie(const float interval, const uint32_t current_time)
 {
-  logger::debug("AdvanceMovie");
-  if (Settings::VisiblePlayTime_ && Settings::VisibleEquipKey && Settings::UpdatePlayTime >= 1) {
-	update();
-	Settings::UpdatePlayTime = 0;
-  }
-  IMenu::AdvanceMovie(interval, current_time);
+    if (!STB::AdvanceWidget(*this, STB::Widget::PlayTime, frameState_, interval, current_time)) {
+        return;
+    }
+    if (Settings::VisiblePlayTime_ && Settings::VisibleEquipKey && frameState_.elapsed >= 1.0f) {
+        update();
+        frameState_.elapsed = 0.0f;
+    }
 }
 
 auto WidgetPlayTime::toggle_visibility(const bool mode) -> void
 {
-  const auto ui = RE::UI::GetSingleton();
-  if (!ui) {
-    return;
-  }
-
-  const auto overlay_menu = ui->GetMenu(MENU_NAME);
-  if (!overlay_menu || !overlay_menu->uiMovie) {
-    return;
-  }
-
-  overlay_menu->uiMovie->SetVisible(mode);
+    STB::Hud().Visibility(mode);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "HudRequests.h"
 
 struct WidgetGameTime final : RE::IMenu {
 public:
@@ -18,6 +19,7 @@ public:
   auto AdvanceMovie(float interval, uint32_t current_time) -> void override;
 
 private:
+  STB::WidgetFrameState frameState_;
   class WidgetLogger final : public RE::GFxLog
   {
   public:

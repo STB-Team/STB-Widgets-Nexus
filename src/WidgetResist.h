@@ -1,4 +1,5 @@
 #pragma once
+#include "HudRequests.h"
 struct ResistWidget final : RE::IMenu
 {
 public:
@@ -19,6 +20,7 @@ public:
   auto AdvanceMovie(float interval, uint32_t current_time) -> void override;
 
 private:
+  STB::WidgetFrameState frameState_;
   class ResistLogger final : public RE::GFxLog
   {
   public:

@@ -2,190 +2,103 @@
 #include "Settings.h"
 #include "MenuHandler.h"
 #include "WidgetEquip.h"
+#include "HudRuntime.h"
 #include <Windows.h>
 
 using namespace RE;
 
 void ShowWidget(bool hide)
 {
-	if (auto ui = UI::GetSingleton()) {
-		if (Settings::CombatEquip_ && Settings::VisibleEquip_ && ui->GetMenu("equipWidget_STB") && ui->GetMenu("equipWidget_STB")->uiMovie) {
-			GFxValue Alpha = 0;
-			if (!hide)
-				Alpha = Settings::AlphaEquip_;
-			ui->GetMenu("equipWidget_STB")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-		}
-		if (Settings::CombatLvl_ && Settings::VisibleLvl_ && ui->GetMenu("lvlWidget") && ui->GetMenu("lvlWidget")->uiMovie) {
-			GFxValue Alpha = 0;
-			if (!hide)
-				Alpha = Settings::AlphaLvl_;
-			ui->GetMenu("lvlWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-		}
-		if (Settings::CombatResist_ && Settings::VisibleResist_ && ui->GetMenu("resistWidget") && ui->GetMenu("resistWidget")->uiMovie) {
-			GFxValue Alpha = 0;
-			if (!hide)
-				Alpha = Settings::AlphaResist_;
-			ui->GetMenu("resistWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-		}
-		if (Settings::CombatGold_ && Settings::VisibleGold_ && ui->GetMenu("goldWidget") && ui->GetMenu("goldWidget")->uiMovie) {
-			GFxValue Alpha = 0;
-			if (!hide)
-				Alpha = Settings::AlphaGold_;
-			ui->GetMenu("goldWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-		}
-		if (Settings::CombatWeight_ && Settings::VisibleWeight_ && ui->GetMenu("weightWidget") && ui->GetMenu("weightWidget")->uiMovie) {
-			GFxValue Alpha = 0;
-			if (!hide)
-				Alpha = Settings::AlphaWeight_;
-			ui->GetMenu("weightWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-		}
-	}
+    if (Settings::CombatEquip_ && Settings::VisibleEquip_) {
+        STB::Hud().Alpha(STB::Widget::Equip, { hide ? 0.0f : Settings::AlphaEquip_, std::nullopt });
+    }
+    if (Settings::CombatLvl_ && Settings::VisibleLvl_) {
+        STB::Hud().Alpha(STB::Widget::Level, { hide ? 0.0f : Settings::AlphaLvl_, std::nullopt });
+    }
+    if (Settings::CombatResist_ && Settings::VisibleResist_) {
+        STB::Hud().Alpha(STB::Widget::Resist, { hide ? 0.0f : Settings::AlphaResist_, std::nullopt });
+    }
+    if (Settings::CombatGold_ && Settings::VisibleGold_) {
+        STB::Hud().Alpha(STB::Widget::Gold, { hide ? 0.0f : Settings::AlphaGold_, std::nullopt });
+    }
+    if (Settings::CombatWeight_ && Settings::VisibleWeight_) {
+        STB::Hud().Alpha(STB::Widget::Weight, { hide ? 0.0f : Settings::AlphaWeight_, std::nullopt });
+    }
 }
 void HideEquip()
 {
-	if (Settings::VisibleEquip_)
-		if (auto ui = UI::GetSingleton()) {
-			if (ui->GetMenu("equipWidget_STB") && ui->GetMenu("equipWidget_STB")->uiMovie) {
-				GFxValue Check = 0;
-				if (ui->GetMenu("equipWidget_STB")->uiMovie->GetVariable(&Check, "_root.widget._alpha"))
-					if (Check.GetNumber() >= Settings::AlphaEquip_) {
-						GFxValue Alpha = 0;
-						ui->GetMenu("equipWidget_STB")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-					}
-			}
-		}
+    if (Settings::VisibleEquip_) {
+        STB::Hud().Alpha(STB::Widget::Equip, { 0.0f, Settings::AlphaEquip_ });
+    }
+}
+void ShowWidgetEquip()
+{
+    if (Settings::ChangeEquip_ && Settings::VisibleEquip_) {
+        if (Settings::ChangeEquipDelay <= 0) {
+            STB::Hud().Alpha(STB::Widget::Equip, { Settings::AlphaEquip_, std::nullopt });
+        }
+        Settings::ChangeEquipDelay = Settings::ChangeEquipDelayBase;
+    }
 }
 void HideResist()
 {
-	if (Settings::VisibleResist_)
-	if (auto ui = UI::GetSingleton()) {
-		if (ui->GetMenu("resistWidget") && ui->GetMenu("resistWidget")->uiMovie) {
-			GFxValue Check = 0;
-			if (ui->GetMenu("resistWidget")->uiMovie->GetVariable(&Check, "_root.widget._alpha"))
-				if (Check.GetNumber() >= Settings::AlphaResist_) {
-					GFxValue Alpha = 0;
-					ui->GetMenu("resistWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				}
-		}
-	}
-}
-
-void HideWeight()
-{
-	if (Settings::VisibleWeight_)
-	if (auto ui = UI::GetSingleton()) {
-		if (ui->GetMenu("weightWidget") && ui->GetMenu("weightWidget")->uiMovie) {
-			GFxValue Check = 0;
-			if (ui->GetMenu("weightWidget")->uiMovie->GetVariable(&Check, "_root.widget._alpha"))
-				if (Check.GetNumber() >= Settings::AlphaWeight_) {
-					GFxValue Alpha = 0;
-					ui->GetMenu("weightWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				}
-		}
-	}
-}
-
-void HideGold()
-{
-	if (Settings::VisibleGold_)
-	if (auto ui = UI::GetSingleton()) 
-		if (ui->GetMenu("goldWidget") && ui->GetMenu("goldWidget")->uiMovie) {
-				GFxValue Check = 0;
-				if (ui->GetMenu("goldWidget")->uiMovie->GetVariable(&Check, "_root.widget._alpha")) 
-					if (Check.GetNumber() >= Settings::AlphaGold_) {
-						GFxValue Alpha = 0;
-						ui->GetMenu("goldWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-					}
-				}
-	}
-
-
-void HideLvl()
-{
-	if (Settings::VisibleLvl_)
-	if (auto ui = UI::GetSingleton()) 
-		if (ui->GetMenu("lvlWidget") && ui->GetMenu("lvlWidget")->uiMovie) {
-			GFxValue Check = 0;
-			if (ui->GetMenu("lvlWidget")->uiMovie->GetVariable(&Check ,"_root.widget._alpha"))
-					if (Check.GetNumber() >= Settings::AlphaLvl_) {
-					GFxValue Alpha = 0;
-					ui->GetMenu("lvlWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				}
-		}
-}
-
-void ShowWidgetEquip()
-{
-	if (Settings::ChangeEquip_ && Settings::VisibleEquip_) {
-		if (auto ui = UI::GetSingleton(); ui && Settings::ChangeEquipDelay <= 0) {
-			if (ui->GetMenu("equipWidget_STB") && ui->GetMenu("equipWidget_STB")->uiMovie) {
-				GFxValue Alpha = Settings::AlphaEquip_;
-				ui->GetMenu("equipWidget_STB")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				Settings::ChangeEquipDelay = (float)Settings::ChangeEquipDelayBase;
-			}
-		} else {
-			Settings::ChangeEquipDelay = (float)Settings::ChangeEquipDelayBase;
-		}
-	}
+    if (Settings::VisibleResist_) {
+        STB::Hud().Alpha(STB::Widget::Resist, { 0.0f, Settings::AlphaResist_ });
+    }
 }
 void ShowWidgetResist()
 {
-	if (Settings::ChangeResist_ && Settings::VisibleResist_) {
-		if (auto ui = UI::GetSingleton(); ui && Settings::ChangeResistDelay <= 0) {
-			if (ui->GetMenu("resistWidget") && ui->GetMenu("resistWidget")->uiMovie) {
-				GFxValue Alpha = Settings::AlphaResist_;
-				ui->GetMenu("resistWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				Settings::ChangeResistDelay = (float)Settings::ChangeResistDelayBase;
-			}
-		} else {
-			Settings::ChangeResistDelay = (float)Settings::ChangeResistDelayBase;
-		}
-	}
+    if (Settings::ChangeResist_ && Settings::VisibleResist_) {
+        if (Settings::ChangeResistDelay <= 0) {
+            STB::Hud().Alpha(STB::Widget::Resist, { Settings::AlphaResist_, std::nullopt });
+        }
+        Settings::ChangeResistDelay = Settings::ChangeResistDelayBase;
+    }
 }
-
+void HideWeight()
+{
+    if (Settings::VisibleWeight_) {
+        STB::Hud().Alpha(STB::Widget::Weight, { 0.0f, Settings::AlphaWeight_ });
+    }
+}
 void ShowWidgetWeight()
 {
-	if (Settings::ChangeWeight_ && Settings::VisibleWeight_) {
-		if (auto ui = UI::GetSingleton(); ui && Settings::ChangeWeightDelay <= 0) {
-			if (ui->GetMenu("weightWidget") && ui->GetMenu("weightWidget")->uiMovie) {
-				GFxValue Alpha = Settings::AlphaWeight_;
-				ui->GetMenu("weightWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				Settings::ChangeWeightDelay = (float)Settings::ChangeWeightDelayBase;
-			}
-		} else {
-			Settings::ChangeWeightDelay = (float)Settings::ChangeWeightDelayBase;
-		}
-	}
+    if (Settings::ChangeWeight_ && Settings::VisibleWeight_) {
+        if (Settings::ChangeWeightDelay <= 0) {
+            STB::Hud().Alpha(STB::Widget::Weight, { Settings::AlphaWeight_, std::nullopt });
+        }
+        Settings::ChangeWeightDelay = Settings::ChangeWeightDelayBase;
+    }
 }
-
+void HideGold()
+{
+    if (Settings::VisibleGold_) {
+        STB::Hud().Alpha(STB::Widget::Gold, { 0.0f, Settings::AlphaGold_ });
+    }
+}
 void ShowWidgetGold()
 {
-	if (Settings::ChangeGold_ && Settings::VisibleGold_) {
-		if (auto ui = UI::GetSingleton(); ui && Settings::ChangeGoldDelay <= 0) {
-			if (ui->GetMenu("goldWidget") && ui->GetMenu("goldWidget")->uiMovie) {
-				GFxValue Alpha = Settings::AlphaGold_;
-				ui->GetMenu("goldWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				Settings::ChangeGoldDelay = (float)Settings::ChangeGoldDelayBase;
-			}
-		} else {
-			Settings::ChangeGoldDelay = (float)Settings::ChangeGoldDelayBase;
-		}
-	}
+    if (Settings::ChangeGold_ && Settings::VisibleGold_) {
+        if (Settings::ChangeGoldDelay <= 0) {
+            STB::Hud().Alpha(STB::Widget::Gold, { Settings::AlphaGold_, std::nullopt });
+        }
+        Settings::ChangeGoldDelay = Settings::ChangeGoldDelayBase;
+    }
 }
-
+void HideLvl()
+{
+    if (Settings::VisibleLvl_) {
+        STB::Hud().Alpha(STB::Widget::Level, { 0.0f, Settings::AlphaLvl_ });
+    }
+}
 void ShowWidgetLvl()
 {
-	if (Settings::ChangeLvl_ && Settings::VisibleLvl_) {
-		if (auto ui = UI::GetSingleton(); ui && Settings::ChangeLvlDelay <= 0) {
-			if (ui->GetMenu("lvlWidget") && ui->GetMenu("lvlWidget")->uiMovie) {
-				GFxValue Alpha = Settings::AlphaLvl_;
-				ui->GetMenu("lvlWidget")->uiMovie->Invoke("widget.tweenAlpha", nullptr, &Alpha, 1);
-				Settings::ChangeLvlDelay = (float)Settings::ChangeLvlDelayBase;
-			}
-		} else {
-			Settings::ChangeLvlDelay = (float)Settings::ChangeLvlDelayBase;
-		}
-	}
+    if (Settings::ChangeLvl_ && Settings::VisibleLvl_) {
+        if (Settings::ChangeLvlDelay <= 0) {
+            STB::Hud().Alpha(STB::Widget::Level, { Settings::AlphaLvl_, std::nullopt });
+        }
+        Settings::ChangeLvlDelay = Settings::ChangeLvlDelayBase;
+    }
 }
 
 class PlayerUpdate
@@ -321,7 +234,7 @@ private:
 					 !ui->IsMenuOpen(RE::FaderMenu::MENU_NAME) && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
 				// Configure widgets once their movies have loaded (coc / new game race),
 				// then keep them visible in normal play.
-				ConfigureHudIfNeeded();
+				// Configuration is consumed by each widget on its UI frame.
 				check2(true);
 			}
 			}
@@ -378,20 +291,6 @@ private:
 			ShowWidget(true);
 				Settings::isAtcive = !Settings::isAtcive;
 			}
-		if (Settings::VisibleGameTime_ && Settings::UpdateGameTime < 1)
-				Settings::UpdateGameTime += delta;
-		if (Settings::VisiblePlayTime_ && Settings::UpdatePlayTime < 1)
-				Settings::UpdatePlayTime += delta;
-		if (Settings::VisibleEquip_ && Settings::UpdateEquip < 0.2f)
-				Settings::UpdateEquip += delta;
-		if (Settings::VisibleResist_ && Settings::UpdateResist < 0.2f)
-				Settings::UpdateResist += delta;
-		if (Settings::VisibleLvl_ && Settings::UpdateLvl < 0.2f)
-				Settings::UpdateLvl += delta;
-		if (Settings::VisibleWeight_ && Settings::UpdateWeight < 1)
-				Settings::UpdateWeight += delta;
-		if (Settings::VisibleGold_ && Settings::UpdateGold < 1)
-				Settings::UpdateGold += delta;
 		_Update(player, delta);
 	}
 
