@@ -43,16 +43,6 @@ namespace Input
 		return key;
 	}
 
-	// Toggles a single widget's visibility, but only if it is currently enabled
-	// in the settings (a_enabled) and its movie is loaded.
-	static void HideWidget(const char* a_menu, UI* a_ui, bool a_visible, bool a_enabled)
-	{
-		if (auto menu = a_ui->GetMenu(a_menu); menu && menu->uiMovie && a_enabled) {
-			const GFxValue visible = a_visible;
-			menu->uiMovie->Invoke("widget.setVisible", nullptr, &visible, 1);
-		}
-	}
-
 	EventResult InputEventHandler::ProcessEvent(InputEvent* const* a_event, BSTEventSource<InputEvent*>*)
 	{
 		using EventType = INPUT_EVENT_TYPE;
@@ -87,13 +77,6 @@ namespace Input
 			if (button->IsDown() && key == static_cast<std::uint32_t>(Settings::HideKey) &&
 				!ImGuiMCP::GetIO()->MouseDrawCursor) {
 				Settings::VisibleEquipKey = !Settings::VisibleEquipKey;
-				HideWidget("equipWidget_STB", ui, Settings::VisibleEquipKey, Settings::VisibleEquip_);
-				HideWidget("resistWidget", ui, Settings::VisibleEquipKey, Settings::VisibleResist_);
-				HideWidget("lvlWidget", ui, Settings::VisibleEquipKey, Settings::VisibleLvl_);
-				HideWidget("goldWidget", ui, Settings::VisibleEquipKey, Settings::VisibleGold_);
-				HideWidget("playtimeWidget", ui, Settings::VisibleEquipKey, Settings::VisiblePlayTime_);
-				HideWidget("gametimeWidget", ui, Settings::VisibleEquipKey, Settings::VisibleGameTime_);
-				HideWidget("weightWidget", ui, Settings::VisibleEquipKey, Settings::VisibleWeight_);
 				CheckInI();
 			}
 		}

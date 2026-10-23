@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "HudRuntime.h"
 #include "WidgetEquip.h"
 #include "WidgetLvlWidget.h"
 #include "WidgetResist.h"
@@ -43,9 +44,14 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 		WidgetPlayTime::show();
 		WidgetGameTime::show();
 		break;
+	case SKSE::MessagingInterface::kPreLoadGame:
+		STB::Hud().BeginSaveLoad();
+		logger::info("Save reload started: HUD generation {}", STB::Hud().Frame().generation);
+		break;
 	case SKSE::MessagingInterface::kNewGame:  // Player starts a new game from main menu.
 		{
 		Settings::get_singleton().load(false);
+		STB::Hud().NewGame();
 		ResistWidget::show();
 		WidgetGold::show();
 		WidgetWeight::show();
@@ -59,7 +65,9 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_message)
 	case SKSE::MessagingInterface::kPostLoadGame:  // Player's selected save game has finished loading.
 		{
 		Settings::get_singleton().load(false);
-		CheckInI();
+        const bool success = a_message->data != nullptr; // SKSE passes the bool as the pointer value
+        STB::Hud().FinishSaveLoad(success);
+        logger::info("Save reload finished: success={}, HUD generation {}", success, STB::Hud().Frame().generation);
 		ResistWidget::show();
 		WidgetGold::show();
 		WidgetWeight::show();
@@ -121,7 +129,7 @@ void InitializeLog()
 	log->flush_on(spdlog::level::info);
 
 	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("[%l] %v"s);
+	spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [thread %t] [%l] %v"s);
 
 	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
 }
@@ -130,6 +138,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 {
 	InitializeLog();
 	SKSE::Init(a_skse);
+	logger::info("Save-reload UI ownership fix enabled (gameplay validation build)");
 	SKSE::AllocTrampoline(1 << 9);
 
 	SetupSerialization();

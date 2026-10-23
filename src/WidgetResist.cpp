@@ -1,5 +1,6 @@
 #include "WidgetResist.h"
 #include "Settings.h"
+#include "HudRuntime.h"
 
 using namespace RE;
 
@@ -88,25 +89,18 @@ auto ResistWidget::update() -> void {
   
 }
 
-void ResistWidget::AdvanceMovie(const float interval, const uint32_t current_time) {
-  logger::debug("AdvanceMovie");
- if (Settings::VisibleResist_ && Settings::VisibleEquipKey && Settings::UpdateResist >= 0.2f) {
-  update();
-  Settings::UpdateResist = 0;
- }
-  IMenu::AdvanceMovie(interval, current_time);
+void ResistWidget::AdvanceMovie(const float interval, const uint32_t current_time)
+{
+    if (!STB::AdvanceWidget(*this, STB::Widget::Resist, frameState_, interval, current_time)) {
+        return;
+    }
+    if (Settings::VisibleResist_ && Settings::VisibleEquipKey && frameState_.elapsed >= 0.2f) {
+        update();
+        frameState_.elapsed = 0.0f;
+    }
 }
 
-auto ResistWidget::toggle_visibility(const bool mode) -> void {
-  const auto ui = UI::GetSingleton();
-  if (!ui) {
-    return;
-  }
-
-  const auto overlay_menu = ui->GetMenu(MENU_NAME);
-  if (!overlay_menu || !overlay_menu->uiMovie) {
-    return;
-  }
-  overlay_menu->uiMovie->SetVisible(mode);
+auto ResistWidget::toggle_visibility(const bool mode) -> void
+{
+    STB::Hud().Visibility(mode);
 }
-
